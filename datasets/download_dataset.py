@@ -1,8 +1,11 @@
+
 from datasets import load_dataset
 
-print("Downloading RP-Opus...")
+DATASET_NAME = "HuggingFaceH4/ultrachat_200k"
 
-dataset = load_dataset("taozi555/rp-opus")
+print(f"Downloading {DATASET_NAME}...")
+
+dataset = load_dataset(DATASET_NAME)
 
 print(dataset)
-print("Dataset downloaded and cached!")
+print("Dataset downloaded!")
