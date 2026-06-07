@@ -10,23 +10,40 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark-dimmed.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 
+    <!-- Emoji Picker Component -->
+    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1/index.js"></script>
+
     <!-- Our Stylesheet -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header class="header">
-        <div class="header-logo">
-            <div class="logo-icon">⚡</div>
+        <button class="hdr-btn" id="toggleLeftSidebarBtn" title="Toggle Characters List" onclick="toggleLeftSidebar()" style="margin-right: 12px; position: relative; z-index: 2;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+            Characters
+        </button>
+        <div class="header-logo" id="headerLogo">
+            <div class="logo-icon" id="logoIcon">🐱</div>
             <div class="logo-words">
-                <span class="logo-name">CodeMentor</span>
-                <span class="logo-tag">AI TUTOR</span>
+                <span class="logo-name" id="logoName">Yuki</span>
+                <span class="logo-tag" id="logoTag">SARCASTIC CODER</span>
             </div>
         </div>
 
-        <span class="model-badge">● v1.0</span>
+        <span class="model-badge" id="modelBadge">● Fallback Mode</span>
 
         <div class="header-actions">
-            <!-- clear chat button -->
+            <button class="hdr-btn" id="toggleSidebarBtn" title="Toggle Control Panel" onclick="toggleSidebar()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="9" y1="3" x2="9" y2="21"/>
+                </svg>
+                Settings
+            </button>
             <button class="hdr-btn" id="clearBtn" title="Clear chat" onclick="clearChat()">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="3 6 5 6 21 6"/>
@@ -38,47 +55,161 @@
         </div>
     </header>
 
-    <div class="messages-area" id="msgArea">
-        <div class="welcome-screen" id="welcomeScreen">
-            <div class="welcome-icon">⚡</div>
-            <h1 class="welcome-h1">Hey, I'm CodeMentor</h1>
-            <p class="welcome-sub">
-                Your personal AI coding tutor. Ask me anything — from basic syntax to tricky algorithms. Let's write some code! 🚀
-            </p>
+    <div class="main-wrapper">
+        <!-- Left Sidebar: Select Character -->
+        <aside class="left-sidebar open" id="leftSidebar">
+            <div class="left-sidebar-header">
+                <h3>Characters</h3>
+            </div>
+            <div class="left-sidebar-content">
+                <div class="char-presets-vertical" id="charPresets">
+                    <!-- Preset cards loaded dynamically -->
+                </div>
+            </div>
+        </aside>
+
+        <div class="chat-container">
+            <div class="messages-area" id="msgArea">
+                <div class="welcome-screen" id="welcomeScreen">
+                    <div class="welcome-icon" id="welcomeIcon">🐱</div>
+                    <h1 class="welcome-h1" id="welcomeH1">Hey, I'm Yuki</h1>
+                    <p class="welcome-sub" id="welcomeSub">
+                        Ugh, another human seeking coding wisdom? Fine. Let's see what kind of bugs you've managed to write today. Make it quick, I have cat stuff to do. 💻
+                    </p>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <div class="input-wrap">
+                    <textarea
+                        id="msgInput"
+                        rows="1"
+                        placeholder="Type your message here..."
+                        onkeydown="handleKey(event)"
+                        oninput="handleTyping(this)"
+                    ></textarea>
+
+                    <button class="send-btn" id="sendBtn" onclick="sendMsg()" disabled title="Send message" aria-label="Send message">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <line x1="22" y1="2" x2="11" y2="13"/>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="input-footer">
+                    <span class="hint-text">⏎ send &nbsp;·&nbsp; ⇧⏎ new line</span>
+                    <span class="char-count" id="charCount">0 / 2000</span>
+                </div>
             </div>
         </div>
 
+        <!-- Right Sidebar: Control Panel (Settings & Sessions) -->
+        <aside class="sidebar open" id="sidebar">
+            <div class="sidebar-header">
+                <h3>Control Panel</h3>
+            </div>
+
+            <div class="sidebar-content">
+                <!-- Tab Headers -->
+                <div class="tabs-nav">
+                    <button class="tab-btn active" onclick="switchTab('parameters')">Settings</button>
+                    <button class="tab-btn" onclick="switchTab('chats')">Sessions</button>
+                </div>
+
+                <!-- Tab: Settings (Model Parameters + Customize Form Toggle) -->
+                <div class="tab-pane active" id="tab-parameters">
+                    <div class="section-title">Generation Settings</div>
+                    
+                    <div class="param-slider-group">
+                        <div class="slider-label">
+                            <span>Temperature</span>
+                            <span id="tempVal">0.7</span>
+                        </div>
+                        <input type="range" id="paramTemp" min="0.0" max="1.5" step="0.05" value="0.7" oninput="document.getElementById('tempVal').innerText=this.value">
+                        <div class="param-desc">Controls randomness. High values make output more creative, lower values more focused.</div>
+                    </div>
+
+                    <div class="param-slider-group">
+                        <div class="slider-label">
+                            <span>Top-P</span>
+                            <span id="topPVal">0.9</span>
+                        </div>
+                        <input type="range" id="paramTopP" min="0.0" max="1.0" step="0.05" value="0.9" oninput="document.getElementById('topPVal').innerText=this.value">
+                        <div class="param-desc">Nucleus sampling. Ignores tail distributions of low probability tokens.</div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <!-- Customize Character Toggle -->
+                    <button class="sidebar-btn primary-btn" onclick="toggleCustomizeForm()">Customize Character</button>
+
+                    <div id="customizeFormContainer" style="display: none; flex-direction: column; gap: 14px;">
+                        <div class="section-title">Customize Character Profile</div>
+                        <form id="charForm" onsubmit="event.preventDefault(); saveCharacter();">
+                            <div class="form-group">
+                                <label>Name</label>
+                                <input type="text" id="charName" required placeholder="e.g. Yuki">
+                            </div>
+                            <div class="form-group">
+                                <label>Tag / Role</label>
+                                <input type="text" id="charTag" placeholder="e.g. Sarcastic Coder">
+                            </div>
+                            <div class="form-group">
+                                <label>Avatar Emoji</label>
+                                <input type="hidden" id="charAvatar" required value="🤖">
+                                <button type="button" class="sidebar-btn" id="emojiPickerBtn" onclick="toggleEmojiPicker()" style="display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; padding: 10px; margin-bottom: 0;">
+                                    <span id="chosenEmojiIcon" style="font-size: 20px;">🤖</span> Choose Emoji
+                                </button>
+                            </div>
+                            <div class="form-group">
+                                <label>Greeting Message</label>
+                                <textarea id="charGreeting" rows="2" placeholder="Greeting message when opening chat..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>System / Personality Instruction</label>
+                                <textarea id="charPrompt" rows="4" required placeholder="Describe how the chatbot acts and responds..."></textarea>
+                            </div>
+                            <button type="submit" class="sidebar-btn primary-btn">Save Character Profile</button>
+                            <button type="button" class="sidebar-btn" onclick="resetForm()">Create New Card</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Tab: Chat History / Sessions -->
+                <div class="tab-pane" id="tab-chats">
+                    <div class="section-title">Current Chat Session</div>
+                    <button class="sidebar-btn primary-btn" onclick="saveCurrentChat()">Save Current Session</button>
+
+                    <div class="divider"></div>
+
+                    <div class="section-title">Saved Sessions</div>
+                    <div class="sessions-list" id="sessionsList">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+            </div>
+        </aside>
     </div>
 
-    <div class="input-area">
-        <div class="input-wrap">
-            <textarea
-                id="msgInput"
-                rows="1"
-                placeholder="Ask me anything about coding..."
-                onkeydown="handleKey(event)"
-                oninput="handleTyping(this)"
-            ></textarea>
-
-            <button class="send-btn" id="sendBtn" onclick="sendMsg()" disabled title="Send message" aria-label="Send message">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <line x1="22" y1="2" x2="11" y2="13"/>
-                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                </svg>
-            </button>
+    <!-- Draggable Emoji Picker Modal -->
+    <div id="emojiPickerModal" class="emoji-modal" style="display: none;">
+        <div class="emoji-modal-header" id="emojiModalHeader">
+            <span>Choose Character Emoji</span>
+            <button type="button" class="emoji-modal-close" onclick="toggleEmojiPicker()">&times;</button>
         </div>
-
-        <div class="input-footer">
-            <span class="hint-text">⏎ send &nbsp;·&nbsp; ⇧⏎ new line</span>
-            <span class="char-count" id="charCount">0 / 2000</span>
+        <div class="emoji-modal-body">
+            <emoji-picker class="dark"></emoji-picker>
         </div>
     </div>
 
     <!-- Toast notification -->
     <div class="toast" id="toast">Copied!</div>
 
+    <!-- Puter SDK for keyless LLM generation -->
+    <script src="https://js.puter.com/v2/"></script>
+
     <!-- Our Script -->
     <script src="script.js"></script>
-
 </body>
 </html>
